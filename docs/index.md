@@ -16,9 +16,9 @@ hero:
 
 features:
   - title: Ready for Everything
-    # details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+
   - title: Small size
-#     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+
   - title: Validation
     details: Out of the box Zod support
 ---
