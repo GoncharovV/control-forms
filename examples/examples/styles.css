@@ -1,0 +1,55 @@
+.example-form  button {
+    padding: 3px 7px;
+    background: rgb(197, 197, 197);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.example-form  button:hover {
+    background: rgb(164, 164, 164);
+}
+
+.example-form input[disabled] {
+    background: rgb(197, 197, 197);;
+}
+
+
+.renders {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.renders .wrapper {
+    min-width: 200px;
+    max-width: 200px;
+    height: 400px;
+    padding: 15px;
+
+    border: 1px solid black;
+}
+
+.renders input {
+    padding: 5px;
+    background: rgb(242, 242, 242);
+
+    border: 1px solid black;
+
+    border-radius: 3px;
+}
+
+.renders pre {
+    font-size: 12px;
+}
+
+.renders button {
+    display: block;
+    padding: 5px;
+    background: rgb(197, 197, 197);
+
+    border-radius: 5px;
+
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
