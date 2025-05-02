@@ -76,7 +76,7 @@ control.ref // HTMLElement
 
 ::: warning Обратите внимание
 В отличии от _React Hook Form_, где `register` относится к **форме целиком** и принимает имя регистрируемого поля,
-в **Event Forms** `register` уже относится к **конкретному полю**
+в **Control Forms** `register` уже относится к **конкретному полю**
 :::
 
 ```tsx
@@ -180,7 +180,7 @@ const control = new FormControl(
 Декструктуризуйте только используемые пропсы
 :::
 
-**Event Forms** использует механизм, аналогичный `useQuery` из `@tanstack/react-query`
+**Control Forms** использует механизм, аналогичный `useQuery` из `@tanstack/react-query`
 
 Компонент будет подписан **только на используемые пропсы**. 
 

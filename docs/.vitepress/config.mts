@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: 'Event Forms',
-  description: 'Event Forms library',
-  base: '/forms-docs-demo/',
+  title: 'Control Forms',
+  description: 'Control Forms library',
+  base: '/control-forms/',
 
   vite: {
     plugins: [react()],

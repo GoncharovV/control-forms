@@ -3,7 +3,7 @@
 layout: home
 
 hero:
-  name: "Event Forms"
+  name: "Control Forms"
   # text: "Just best form library"
   tagline: Inspired by Angular Forms
   actions:
