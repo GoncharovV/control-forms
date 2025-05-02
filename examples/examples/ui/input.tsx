@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 
-import { FormControl } from '../../../dist';
-import { FormControlTrackResult } from '../../../dist/react';
+import { FormControl } from '../../../libs/control-forms';
+import { FormControlTrackResult } from '../../../libs/control-forms-react';
 
 
 interface InputProps {

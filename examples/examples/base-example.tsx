@@ -2,8 +2,8 @@ import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 
-import { FormControl, FormGroup } from '../../dist';
-import { FormControlField, useFormGroup } from '../../dist/react';
+import { FormControl, FormGroup } from '../../libs/control-forms';
+import { FormControlField, useFormGroup } from '../../libs/control-forms-react';
 import { FormGroupState } from './ui/form-group-state';
 import { Input } from './ui/input';
 

@@ -1,7 +1,7 @@
 import { FC, memo } from 'react';
 
-import { FormGroup } from '../../../dist';
-import { useFormGroup } from '../../../dist/react';
+import { FormGroup } from '../../../libs/control-forms';
+import { useFormGroup } from '../../../libs/control-forms-react';
 
 
 interface FormStateProps {

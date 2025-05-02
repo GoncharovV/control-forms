@@ -2,8 +2,8 @@
 import { FC, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { FormControl } from '../../dist';
-import { useFormControl } from '../../dist/react';
+import { FormControl } from '../../libs/control-forms';
+import { useFormControl } from '../../libs/control-forms-react';
 
 import './styles.css';
 

@@ -2,8 +2,8 @@ import { FC, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 
-import { FormArray, FormControl, FormGroup } from '../../dist';
-import { FormArrayField, FormControlField, useFormGroup } from '../../dist/react';
+import { FormArray, FormControl, FormGroup } from '../../libs/control-forms';
+import { FormArrayField, FormControlField, useFormGroup } from '../../libs/control-forms-react';
 import { FormGroupState } from './ui/form-group-state';
 import { Input } from './ui/input';
 
