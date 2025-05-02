@@ -79,6 +79,6 @@ export default defineConfig({
     ],
 
     // TODO:
-    socialLinks: [{ icon: 'github', link: 'https://shikimori.one/MolodoyJeGhoul' }],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/GoncharovV/control-forms' }],
   },
 });
