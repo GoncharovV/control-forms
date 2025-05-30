@@ -10,15 +10,18 @@ import { FormControlTrackResult, useFormControl } from '../use-form-control';
 export interface FormControlFieldProps<TControl extends FormControl> {
   control: TControl;
 
-  children: (data: FormControlTrackResult<TControl>) => ReactNode;
+  render?: (data: FormControlTrackResult<TControl>) => ReactNode;
+  children?: (data: FormControlTrackResult<TControl>) => ReactNode;
 }
 
 function _FormControlField<TControl extends FormControl>(props: FormControlFieldProps<TControl>): ReactNode {
-  const { control, children } = props;
+  const { control, children, render } = props;
 
   const data = useFormControl(control);
 
-  return children(data);
+  const renderer = children ?? render;
+
+  return renderer?.(data);
 }
 
 (_FormControlField as React.FC).displayName = 'FormControlField';

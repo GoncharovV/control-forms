@@ -10,15 +10,18 @@ import { useFormArray } from '../use-form-array';
 export interface FormArrayFieldProps<TControl extends FormArray> {
   control: TControl;
 
-  children: (data: TrackResult<TControl>) => ReactNode;
+  render?: (data: TrackResult<TControl>) => ReactNode;
+  children?: (data: TrackResult<TControl>) => ReactNode;
 }
 
 function _FormArrayField<TControl extends FormArray>(props: FormArrayFieldProps<TControl>): ReactNode {
-  const { control, children } = props;
+  const { control, children, render } = props;
 
   const data = useFormArray(control);
 
-  return children(data);
+  const renderer = children ?? render;
+
+  return renderer?.(data);
 }
 
 (_FormArrayField as React.FC).displayName = 'FormArrayField';
