@@ -21,4 +21,6 @@ function _FormArrayField<TControl extends FormArray>(props: FormArrayFieldProps<
   return children(data);
 }
 
+(_FormArrayField as React.FC).displayName = 'FormArrayField';
+
 export const FormArrayField = React.memo(_FormArrayField) as typeof _FormArrayField;

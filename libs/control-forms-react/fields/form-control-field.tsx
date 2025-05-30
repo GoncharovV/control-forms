@@ -21,4 +21,6 @@ function _FormControlField<TControl extends FormControl>(props: FormControlField
   return children(data);
 }
 
+(_FormControlField as React.FC).displayName = 'FormControlField';
+
 export const FormControlField = React.memo(_FormControlField) as typeof _FormControlField;
