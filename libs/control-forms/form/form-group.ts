@@ -18,7 +18,7 @@ export type BaseFormFields = Record<string, AbstractControl>;
 export interface FormGroupOptions<TFields extends Record<string, unknown> = any> extends AbstractControlGroupOptions {
   onValidSubmit?(data: Prettify<TFields>): Promise<void> | void;
   onInvalidSubmit?(validationResult: ValidationResult): Promise<void> | void;
-  onAnySubmit?(): Promise<void> | void;
+  onAnySubmit?(data: Prettify<TFields> | null, validationResult: ValidationResult | null): Promise<void> | void;
 
   onUpdate?(data: Partial<TFields>): void;
 }
@@ -125,13 +125,17 @@ export class FormGroup<TFields extends BaseFormFields = any>
     this.emitter.emit({ type: 'submit-started' });
 
     try {
-      await Promise.all([
-        validationResult.success
-          ? this.options.onValidSubmit?.(this.value)
-          : this.options.onInvalidSubmit?.(validationResult),
+      const submitPromises = validationResult.success
+        ? [
+          this.options.onValidSubmit?.(this.value),
+          this.options.onAnySubmit?.(this.value, null),
+        ]
+        : [
+          this.options.onInvalidSubmit?.(validationResult),
+          this.options.onAnySubmit?.(null, validationResult),
+        ];
 
-        this.options.onAnySubmit?.(),
-      ]);
+      await Promise.all(submitPromises);
     } catch (exception: unknown) {
       if (__DEV__) {
         console.warn(
