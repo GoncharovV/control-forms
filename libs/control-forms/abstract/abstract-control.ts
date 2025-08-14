@@ -76,6 +76,11 @@ export interface AbstractControlOptions {
   mode?: ValidationMode;
 
   id?: ControlId;
+
+  /**
+   * All calls of `validate` will be skipped if this function returns `true`
+   */
+  skipValidationIf?: () => boolean;
 }
 
 export abstract class AbstractControl<
@@ -305,6 +310,12 @@ export abstract class AbstractControl<
   }
 
   public async validate(): Promise<ValidationResult> {
+    const isShouldValidate = this.getShouldValidate();
+
+    if (!isShouldValidate) {
+      return { success: true, errors: [] };
+    }
+
     this.setValidating(true);
     this.emitter.emit({ type: 'validation-started' });
 
@@ -339,6 +350,14 @@ export abstract class AbstractControl<
 
       throw error;
     }
+  }
+
+  private getShouldValidate() {
+    if (this._options.skipValidationIf) {
+      return !this._options.skipValidationIf();
+    }
+
+    return true;
   }
 
   public setValidationMode(mode: ValidationMode) {
