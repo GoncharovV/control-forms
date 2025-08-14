@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { FormControl, isFormControl } from '../libs/control-forms';
 
 
@@ -97,6 +99,67 @@ describe('FormControl', () => {
       control.setValue('123');
 
       expect(onUpdateFn).toHaveBeenCalledWith('123');
+    });
+  });
+
+  describe('Validation', () => {
+    test('Valid string with min/max length', async () => {
+      const control = new FormControl('hello', {
+        validators: z.string().min(3).max(10),
+      });
+
+      const result = await control.validate();
+
+      expect(result.success).toBe(true);
+      expect(control.isValid).toBe(true);
+      expect(control.errors.length).toBe(0);
+    });
+
+    test('Invalid string: too short', async () => {
+      const control = new FormControl('hi', {
+        validators: z.string().min(3),
+      });
+
+      const result = await control.validate();
+
+      expect(result.success).toBe(false);
+      expect(control.isInvalid).toBe(true);
+      expect(result.errors[0].code).toBe('too_small');
+    });
+
+    test('Valid number in range', async () => {
+      const control = new FormControl(42, {
+        validators: z.number().min(10).max(100),
+      });
+
+      const result = await control.validate();
+
+      expect(result.success).toBe(true);
+      expect(control.isValid).toBe(true);
+    });
+
+    test('Invalid number: too large', async () => {
+      const control = new FormControl(150, {
+        validators: z.number().max(100),
+      });
+
+      const result = await control.validate();
+
+      expect(result.success).toBe(false);
+      expect(control.isInvalid).toBe(true);
+      expect(result.errors[0].code).toBe('too_big');
+    });
+
+    test('Invalid array: not enough items', async () => {
+      const control = new FormControl([1], {
+        validators: z.array(z.number()).min(2),
+      });
+
+      const result = await control.validate();
+
+      expect(result.success).toBe(false);
+      expect(control.isInvalid).toBe(true);
+      expect(result.errors[0].code).toBe('too_small');
     });
   });
 
