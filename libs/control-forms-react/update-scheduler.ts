@@ -1,5 +1,8 @@
 type TimeoutId = ReturnType<typeof setTimeout>;
 
+/**
+ * Not used yet
+ */
 export class UpdateScheduler {
 
   private timeoutId: TimeoutId | null = null;

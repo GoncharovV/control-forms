@@ -1,6 +1,5 @@
 import { AbstractControl } from '../control-forms';
 import { isPropEqual, shallowEqualObjects } from '../control-forms/utils';
-import { UpdateScheduler } from './update-scheduler';
 
 
 type ControlSnapshot<TControl extends AbstractControl> = ReturnType<TControl['getSnapshot']>;
@@ -22,7 +21,6 @@ export class ControlObserver<TControl extends AbstractControl> {
 
   private trackedProps = new Set<keyof ControlSnapshot<TControl>>();
 
-  private readonly scheduler = new UpdateScheduler();
 
   constructor(
     private readonly control: TControl,
@@ -44,12 +42,9 @@ export class ControlObserver<TControl extends AbstractControl> {
 
   public subscribe(callback: () => void) {
     const unsubscribe = this.control.events.subscribe(() => {
-      // Debounces updates with setTimeout(cb, 0)
-      this.scheduler.scheduleUpdate(() => {
-        this.notify();
+      this.notify();
 
-        callback();
-      });
+      callback();
     });
 
     return () => {

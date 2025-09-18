@@ -120,7 +120,9 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
 
   public onChange(newValue: TValue) {
     this.setValue(newValue);
+
     this.markAllAsDirty();
+    this.markAllAsTouched();
 
     if (this.getValidationMode() === 'onChange') {
       this.validate();
