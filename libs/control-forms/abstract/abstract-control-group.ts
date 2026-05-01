@@ -31,7 +31,7 @@ export abstract class AbstractControlGroup<
   }
 
   public get isValid() {
-    const isValid = this.errors.length === 0;
+    const isValid = this.errors.count() === 0;
     const isAllChildrenValid = this.children.every((control) => control.isValid);
 
     return isValid && isAllChildrenValid;
