@@ -1,6 +1,6 @@
 import { EventEmitter, FormEvent, ReadonlyEventEmitter } from '../events';
-import { id, mergeArrays } from '../utils';
-import { validateBySchema, ValidationError, ValidationResult, Validator } from '../validation';
+import { id } from '../utils';
+import { ErrorsStorage, ValidationResult, Validator, ValidatorsController } from '../validation';
 import { AbstractControlGroup } from './abstract-control-group';
 import { AbstractControlEvent, ControlId, ValidationMode } from './types';
 
@@ -30,7 +30,7 @@ export interface AbstractControlOptions {
 	 * **Note that Zod validation format is supported by default.**  
 	 * You can use it out of the box:
 	 * @example
-	 * ```ts
+	 * ```
 	 * new FormControl('', { validators: [z.string().min(5).max(10)] })
 	 * ```
 	 * 
@@ -39,7 +39,7 @@ export interface AbstractControlOptions {
 	 * @example
 	 * ```ts
 	 * const emailControl = new FormControl('', { validators: [
-	 *     z.string().refine(() => { return api.checkExistance() })
+	 *     z.string().refine(() => { return api.checkExistence() })
 	 * ]})
 	 * ```
 	 * 
@@ -95,10 +95,6 @@ export abstract class AbstractControl<
   private _isValidating = false;
 
   private _parent: AbstractControlGroup | null = null;
-
-  private _validationMode?: ValidationMode | null = null;
-
-  private validators: Validator[] = [];
 
   protected readonly emitter = new EventEmitter<AbstractControlEvent | TEvents>();
 
@@ -223,34 +219,49 @@ export abstract class AbstractControl<
     return this._parent;
   }
 
-  private _validationErrors: ValidationError[] = [];
-
   /**
-	 * If `true` – control has no validations errors
-	 */
+  * If `true` – control has no validation errors
+  */
   public get isValid() {
-    return this._validationErrors.length === 0;
+    return this.errors.count() === 0;
   }
 
   /**
-	 * If `true` – control has validations errors
-	 */
+  * If `true` – control has validation errors
+  */
   public get isInvalid() {
     return !this.isValid;
   }
 
-  public get errors() {
-    return this._validationErrors;
-  }
+  // #region Validation Mode
 
-  public getValidationMode() {
+  private _validationMode: ValidationMode | null = null;
+
+  public get validationMode() {
     return this._validationMode;
   }
+
+  public setValidationMode(mode: ValidationMode) {
+    this._validationMode = mode;
+  }
+
+  // #endregion
+
+
+  public readonly validators: ValidatorsController<unknown>;
+
+  public readonly errors: ErrorsStorage;
 
   constructor(private _options: AbstractControlOptions = {}) {
     this.setOptions(_options);
 
     this.id = _options.id || id();
+
+    this.validators = new ValidatorsController();
+
+    this.errors = new ErrorsStorage({
+      onUpdate: (errors) => this.emitter.emit({ type: 'errors-updated', payload: errors }),
+    });
   }
 
   public abstract setValue(value: TValue): void;
@@ -262,7 +273,7 @@ export abstract class AbstractControl<
     const { validators, mode } = options;
 
     if (validators) {
-      this.setValidators(validators);
+      this.validators.replace(validators);
     }
 
     if (mode) {
@@ -279,129 +290,45 @@ export abstract class AbstractControl<
 
   // Validation
 
-  public addError(validationError: ValidationError) {
-    this._validationErrors.push(validationError);
-    this.emitter.emit({ type: 'errors-updated', payload: this._validationErrors });
-  }
-
-  public hasError(errorCode: string) {
-    const found = this._validationErrors.find((error) => error.code === errorCode);
-
-    return Boolean(found);
-  }
-
-  public clearErrors() {
-    this._validationErrors = [];
-    this.emitter.emit({ type: 'errors-updated', payload: [] });
-  }
-
-  public setErrors(validationErrors: ValidationError[]) {
-    this._validationErrors = [...validationErrors];
-    this.emitter.emit({ type: 'errors-updated', payload: this._validationErrors });
-  }
 
   protected setValidating(value: boolean): void {
     this._isValidating = value;
+
+    this.emitter.emit({ type: 'validating-state-changed', payload: value });
   }
 
   public async validate(): Promise<ValidationResult> {
-    const isShouldValidate = this.getShouldValidate();
-
-    if (!isShouldValidate) {
-      return { success: true, errors: [] };
+    if (this.getShouldValidate() === false) {
+      return { success: true, value: this.value };
     }
 
     this.setValidating(true);
-    this.emitter.emit({ type: 'validation-started' });
 
+    const result = await this.validators.validate(this.value);
 
-    if (this.getValidationMode() === 'none' || this.validators.length === 0) {
-      const result = { success: true, errors: [] };
-
-      this.setValidating(false);
-      this.emitter.emit({ type: 'validation-finished', payload: result });
-
-      return result;
+    if (result.success === true) {
+      this.errors.clear();
+    } else {
+      this.errors.replace(result.issues);
     }
 
-    try {
-      const result = await this.validateValue(this.value);
+    this.setValidating(false);
 
-      if (result.success) {
-        this.clearErrors();
-      } else {
-        this.setErrors(result.errors);
-      }
-
-      this.setValidating(false);
-      this.emitter.emit({ type: 'validation-finished', payload: result });
-
-      return result;
-    } catch (error) {
-      console.error('Unexpected validation error');
-
-      this.setValidating(false);
-      this.emitter.emit({ type: 'validation-finished', payload: { success: false, errors: [{ code: 'ERROR', meta: error }] } });
-
-      throw error;
-    }
+    return result;
   }
 
   private getShouldValidate() {
-    if (this._options.skipValidationIf) {
+    if (this.validationMode === 'none' || this.validationMode === null) {
+      return false;
+    }
+
+    if (typeof this._options.skipValidationIf !== 'undefined') {
       return !this._options.skipValidationIf();
     }
 
     return true;
   }
 
-  public setValidationMode(mode: ValidationMode) {
-    this._validationMode = mode;
-  }
-
-  // Validators
-
-  public setValidators(validators: Validator | Validator[]) {
-    if (Array.isArray(validators)) {
-      this.validators = [...validators];
-    } else {
-      this.validators = [validators];
-    }
-  }
-
-  public addValidators(validators: Validator | Validator[]) {
-    if (Array.isArray(validators)) {
-      this.validators.push(...validators);
-    } else {
-      this.validators.push(validators);
-    }
-  }
-
-  public removeValidator(validator: Validator) {
-    this.validators = this.validators.filter((v) => v !== validator);
-  }
-
-  public hasValidator(validator: Validator) {
-    return this.validators.includes(validator);
-  }
-
-  public clearValidators() {
-    this.validators = [];
-  }
-
-  protected async validateValue(data: unknown): Promise<ValidationResult> {
-    const result = await Promise.all(
-      this.validators.map((validator) => validateBySchema(data, validator)),
-    );
-
-    const success = result.every((res) => res.success);
-    const errors = mergeArrays(result.map((res) => res.errors));
-
-    return {
-      success,
-      errors,
-    };
-  }
 
   public getSnapshot() {
     return {
@@ -416,7 +343,7 @@ export abstract class AbstractControl<
 
       isValid: this.isValid,
       isInvalid: this.isInvalid,
-      errors: [...this.errors],
+      errors: [...this.errors.getAll()],
       isValidating: this.isValidating,
     };
   }
@@ -428,8 +355,8 @@ export abstract class AbstractControl<
   }
 
   public inheritConfiguration(parent: AbstractControlGroup) {
-    if (!this._options.mode && parent.getValidationMode()) {
-      this.setValidationMode(parent.getValidationMode()!);
+    if (this.validationMode === null && parent.validationMode !== null) {
+      this.setValidationMode(parent.validationMode);
     }
   }
 
