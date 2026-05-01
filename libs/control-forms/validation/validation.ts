@@ -1,22 +1,6 @@
 
-import { ValidationResult } from './types';
-import { zodAdapter, ZodValidationSchema } from './zod-validation-adapter';
+import { FailureValidationResult, SuccessValidationResult, ValidatorFunction } from '../validation';
 
-
-export type ValidatorFunction = (value: unknown) => ValidationResult | Promise<ValidationResult>;
-
-export type Validator = ValidatorFunction | ZodValidationSchema;
-
-export async function validateBySchema(
-  value: unknown,
-  validator: Validator,
-): Promise<ValidationResult> {
-  if (typeof validator === 'object') {
-    return zodAdapter(value, validator);
-  }
-
-  return validator(value);
-}
 
 export const enum ErrorCodes {
   REQUIRED = 'required',
@@ -25,12 +9,14 @@ export const enum ErrorCodes {
   MAX_LENGTH = 'max_length',
 }
 
-function createResult(success: boolean, code?: ErrorCodes): ValidationResult {
-  return {
-    success,
-    errors: !success && code ? [{ code }] : [],
-  };
+function createSuccessResult(value: unknown): SuccessValidationResult {
+  return { success: true, value };
 }
+
+function createFailureResult(code: ErrorCodes): FailureValidationResult {
+  return { success: false, issues: [{ code, message: code }] };
+}
+
 
 /**
  * Required value validator
@@ -48,7 +34,11 @@ function required(): ValidatorFunction {
 			data === undefined ||
 			data === null;
 
-    return createResult(!isError, ErrorCodes.REQUIRED);
+    if (isError === false) {
+      return createSuccessResult(data);
+    }
+
+    return createFailureResult(ErrorCodes.REQUIRED);
   };
 }
 
@@ -60,10 +50,14 @@ function required(): ValidatorFunction {
 function minLength(min: number): ValidatorFunction {
   return (data: unknown) => {
     if (typeof data !== 'string' && !Array.isArray(data)) {
-      return createResult(false, ErrorCodes.TYPE_ERROR);
+      return createFailureResult(ErrorCodes.TYPE_ERROR);
     }
 
-    return createResult(data.length >= min, ErrorCodes.MIN_LENGTH);
+    if (data.length >= min) {
+      return createSuccessResult(data);
+    }
+
+    return createFailureResult(ErrorCodes.MIN_LENGTH);
   };
 }
 
@@ -75,10 +69,14 @@ function minLength(min: number): ValidatorFunction {
 function maxLength(max: number): ValidatorFunction {
   return (data: unknown) => {
     if (typeof data !== 'string' && !Array.isArray(data)) {
-      return createResult(false, ErrorCodes.TYPE_ERROR);
+      return createFailureResult(ErrorCodes.TYPE_ERROR);
     }
 
-    return createResult(data.length <= max, ErrorCodes.MAX_LENGTH);
+    if (data.length <= max) {
+      return createSuccessResult(data);
+    }
+
+    return createFailureResult(ErrorCodes.MAX_LENGTH);
   };
 }
 

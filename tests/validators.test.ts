@@ -14,112 +14,112 @@ describe('Validators', () => {
       const result =  await validator('');
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.REQUIRED }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.REQUIRED }]);
     });
 
     test('undefined (invalid)', async () => {
       const result =  await validator(undefined);
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.REQUIRED }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.REQUIRED }]);
     });
 
     test('null (invalid)', async () => {
       const result =  await validator(null);
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.REQUIRED }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.REQUIRED }]);
     });
 
     test('NaN (invalid)', async () => {
       const result =  await validator(NaN);
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.REQUIRED }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.REQUIRED }]);
     });
 
     test('not empty object (valid)', async () => {
       const result =  await validator('C.C.');
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('empty object (valid)', async () => {
       const result =  await validator({});
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('object (valid)', async () => {
       const result =  await validator({ x: 46 });
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('number (valid)', async () => {
       const result =  await validator(1);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('zero (valid)', async () => {
       const result =  await validator(0);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('false (valid)', async () => {
       const result =  await validator(false);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('true (valid)', async () => {
       const result =  await validator(true);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('empty array (valid)', async () => {
       const result =  await validator([]);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('array (valid)', async () => {
       const result =  await validator(['L.L.']);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('function (valid)', async () => {
       const result =  await validator(() => {});
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('class (valid)', async () => {
       const result =  await validator(class Class {});
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('class object (valid)', async () => {
       const result =  await validator(new (class Class {})());
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
   });
 
@@ -130,7 +130,7 @@ describe('Validators', () => {
       const result = await validator('123');
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.MIN_LENGTH }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.MIN_LENGTH }]);
     });
 
     test('equals (valid)', async () => {
@@ -139,7 +139,7 @@ describe('Validators', () => {
       const result = await validator('1234');
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('more than (valid)', async () => {
@@ -148,7 +148,7 @@ describe('Validators', () => {
       const result = await validator('123455231');
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('array too short (invalid)', async () => {
@@ -157,7 +157,7 @@ describe('Validators', () => {
       const result = await validator([]);
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.MIN_LENGTH }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.MIN_LENGTH }]);
     });
 
     test('array equals (valid)', async () => {
@@ -166,7 +166,7 @@ describe('Validators', () => {
       const result = await validator([1, 2]);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('array more than (valid)', async () => {
@@ -175,7 +175,7 @@ describe('Validators', () => {
       const result = await validator([1, 2, 3, 4]);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     describe('Invalid input', () => {
@@ -198,7 +198,7 @@ describe('Validators', () => {
         const result = await validator(value);
 
         expect(result.success).toEqual(success);
-        expect(result.errors).toEqual(errors);
+        expect(result.issues).toEqual(errors);
       });
     });
   });
@@ -210,7 +210,7 @@ describe('Validators', () => {
       const result = await validator('12345');
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.MAX_LENGTH }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.MAX_LENGTH }]);
     });
 
     test('equals (valid)', async () => {
@@ -219,7 +219,7 @@ describe('Validators', () => {
       const result = await validator('1234');
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('shorter than (valid)', async () => {
@@ -228,7 +228,7 @@ describe('Validators', () => {
       const result = await validator('121');
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('array too big (invalid)', async () => {
@@ -237,7 +237,7 @@ describe('Validators', () => {
       const result = await validator([1, 2, 3]);
 
       expect(result.success).toBeFalsy();
-      expect(result.errors).toEqual([{ code: ErrorCodes.MAX_LENGTH }]);
+      expect(result.issues).toEqual([{ code: ErrorCodes.MAX_LENGTH }]);
     });
 
     test('array equals (valid)', async () => {
@@ -246,7 +246,7 @@ describe('Validators', () => {
       const result = await validator([1, 2]);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     test('array shorter than (valid)', async () => {
@@ -255,7 +255,7 @@ describe('Validators', () => {
       const result = await validator([1]);
 
       expect(result.success).toBeTruthy();
-      expect(result.errors).toEqual([]);
+      expect(result.issues).toEqual([]);
     });
 
     describe('Invalid input', () => {
@@ -278,7 +278,7 @@ describe('Validators', () => {
         const result = await validator(value);
 
         expect(result.success).toEqual(success);
-        expect(result.errors).toEqual(errors);
+        expect(result.issues).toEqual(errors);
       });
     });
   });
