@@ -92,15 +92,7 @@ export abstract class AbstractControl<
 
   public abstract get value(): TValue;
 
-  private _isDirty = false;
-
-  private _isTouched = false;
-
-  private _isFocused = false;
-
   private _isValidating = false;
-
-  private _isDisabled = false;
 
   private _parent: AbstractControlGroup | null = null;
 
@@ -118,12 +110,32 @@ export abstract class AbstractControl<
     return [];
   }
 
+  // #region Dirty
+
+  private _isDirty = false;
+
   /**
      * Shows value was changed by user
      */
   public get isDirty() {
     return this._isDirty;
   }
+
+  public setDirty(value: boolean): void {
+    this._isDirty = value;
+
+    this.emitter.emit({ type: 'dirty', payload: value });
+  }
+
+  public markAllAsDirty() {
+    this.setDirty(true);
+  }
+
+  // #endregion
+
+  // #region Touched
+
+  private _isTouched = false;
 
   /**
      * Shows form control was focused
@@ -132,13 +144,39 @@ export abstract class AbstractControl<
     return this._isTouched;
   }
 
+  public setTouched(value: boolean): void {
+    this._isTouched = value;
+
+    this.emitter.emit({ type: 'touched', payload: true });
+  }
+
+  public markAllAsTouched() {
+    this.setTouched(true);
+  }
+
+  // #endregion
+
+  // #region Focused
+
+  private _isFocused = false;
+
   public get isFocused() {
     return this._isFocused;
   }
 
+  protected setFocused(value: boolean): void {
+    this._isFocused = value;
+  }
+
+  // #endregion
+
   public get isValidating() {
     return this._isValidating;
   }
+
+  // #region Enabled/Disabled
+
+  private _isDisabled = false;
 
   /**
 	 * It only used for HTML attribute "disabled"
@@ -160,6 +198,26 @@ export abstract class AbstractControl<
   public get isEnabled() {
     return !this.isDisabled;
   }
+
+  public disable(): void {
+    this.setDisabled(true);
+
+    this.emitter.emit({ type: 'disabled' });
+  }
+
+  public enable(): void {
+    this.setDisabled(false);
+
+    this.emitter.emit({ type: 'enabled' });
+  }
+
+  public setDisabled(value: boolean): void {
+    this._isDisabled = value;
+
+    this.emitter.emit({ type: 'DisabledChanged', payload: value });
+  }
+
+  // #endregion
 
   public get parent() {
     return this._parent;
@@ -193,30 +251,12 @@ export abstract class AbstractControl<
     this.setOptions(_options);
 
     this.id = _options.id || id();
-
-    this._bindMethods();
   }
 
-  private _bindMethods() {
-    this.setValue = this.setValue.bind(this);
+  public abstract setValue(value: TValue): void;
 
-    this.markAllAsDirty = this.markAllAsDirty.bind(this);
-    this.markAllAsTouched = this.markAllAsTouched.bind(this);
-    this.setTouched = this.setTouched.bind(this);
-    this.setFocused = this.setFocused.bind(this);
-    this.setDirty = this.setDirty.bind(this);
+  public abstract reset(): void;
 
-    this.enable = this.enable.bind(this);
-    this.disable = this.disable.bind(this);
-
-    this.validate = this.validate.bind(this);
-    this.getValidationMode = this.getValidationMode.bind(this);
-    this.clearErrors = this.clearErrors.bind(this);
-
-    this.reset = this.reset.bind(this);
-
-    this.getSnapshot = this.getSnapshot.bind(this);
-  }
 
   public setOptions(options: AbstractControlOptions) {
     const { validators, mode } = options;
@@ -236,51 +276,6 @@ export abstract class AbstractControl<
     this._options = options;
   }
 
-  public abstract setValue(value: TValue): void;
-
-  public abstract reset(): void;
-
-  public setTouched(value: boolean): void {
-    this._isTouched = value;
-
-    this.emitter.emit({ type: 'touched', payload: true });
-  }
-
-  public markAllAsTouched() {
-    this.setTouched(true);
-  }
-
-  public setDirty(value: boolean): void {
-    this._isDirty = value;
-
-    this.emitter.emit({ type: 'dirty', payload: value });
-  }
-
-  public markAllAsDirty() {
-    this.setDirty(true);
-  }
-
-  protected setFocused(value: boolean): void {
-    this._isFocused = value;
-  }
-
-  public disable(): void {
-    this.setDisabled(true);
-
-    this.emitter.emit({ type: 'disabled' });
-  }
-
-  public enable(): void {
-    this.setDisabled(false);
-
-    this.emitter.emit({ type: 'enabled' });
-  }
-
-  public setDisabled(value: boolean): void {
-    this._isDisabled = value;
-
-    this.emitter.emit({ type: 'DisabledChanged', payload: value });
-  }
 
   // Validation
 
