@@ -1,7 +1,6 @@
-import { EventEmitter, FormEvent, ReadonlyEventEmitter } from '../events';
+import { EventEmitter, ReadonlyEventEmitter } from '../events';
 import { id } from '../utils';
 import { ErrorsStorage, ValidationResult, Validator, ValidatorsController } from '../validation';
-import { AbstractControlGroup } from './abstract-control-group';
 import { AbstractControlEvent, ControlId, ValidationMode } from './types';
 
 
@@ -83,10 +82,7 @@ export interface AbstractControlOptions {
   skipValidationIf?: () => boolean;
 }
 
-export abstract class AbstractControl<
-  TValue = any,
-  TEvents extends FormEvent = any,
-> {
+export abstract class AbstractControl<TValue = any> {
 
   public readonly id: ControlId;
 
@@ -94,15 +90,15 @@ export abstract class AbstractControl<
 
   private _isValidating = false;
 
-  private _parent: AbstractControlGroup | null = null;
+  private _parent: AbstractControl<any> | null = null;
 
-  protected readonly emitter = new EventEmitter<AbstractControlEvent | TEvents>();
+  protected readonly emitter = new EventEmitter<AbstractControlEvent>();
 
-  public get events(): ReadonlyEventEmitter<AbstractControlEvent | TEvents> {
+  public get events(): ReadonlyEventEmitter<AbstractControlEvent> {
     return this.emitter;
   }
 
-  protected get children(): AbstractControl<any>[] {
+  protected get children(): AbstractControl[] {
     return [];
   }
 
@@ -210,7 +206,7 @@ export abstract class AbstractControl<
   public setDisabled(value: boolean): void {
     this._isDisabled = value;
 
-    this.emitter.emit({ type: 'DisabledChanged', payload: value });
+    this.emitter.emit({ type: 'disabled' });
   }
 
   // #endregion
@@ -253,11 +249,11 @@ export abstract class AbstractControl<
   public readonly errors: ErrorsStorage;
 
   constructor(private _options: AbstractControlOptions = {}) {
+    this.validators = new ValidatorsController();
+
     this.setOptions(_options);
 
     this.id = _options.id || id();
-
-    this.validators = new ValidatorsController();
 
     this.errors = new ErrorsStorage({
       onUpdate: (errors) => this.emitter.emit({ type: 'errors-updated', payload: errors }),
@@ -287,9 +283,7 @@ export abstract class AbstractControl<
     this._options = options;
   }
 
-
   // Validation
-
 
   protected setValidating(value: boolean): void {
     this._isValidating = value;
@@ -330,6 +324,11 @@ export abstract class AbstractControl<
   }
 
 
+  /**
+   * @deprecated
+   * 
+   * TODO: delete
+   */
   public getSnapshot() {
     return {
       value: this.value,
@@ -350,12 +349,10 @@ export abstract class AbstractControl<
 
   // Parent
 
-  public setParent(parent: AbstractControlGroup) {
+  public setParent(parent: AbstractControl | null) {
     this._parent = parent;
-  }
 
-  public inheritConfiguration(parent: AbstractControlGroup) {
-    if (this.validationMode === null && parent.validationMode !== null) {
+    if (parent && this.validationMode === null && parent.validationMode !== null) {
       this.setValidationMode(parent.validationMode);
     }
   }

@@ -1,60 +1,75 @@
-import { FormEvent } from '../events';
+
+import { EventEmitter, UnsubscribeFn } from '../events';
 import { AbstractControl, AbstractControlOptions } from './abstract-control';
 import { AbstractGroupEvent } from './types';
 
 
-export type AbstractControlGroupOptions = AbstractControlOptions;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface AbstractControlGroupOptions extends AbstractControlOptions {
+
+}
 
 export abstract class AbstractControlGroup<
   TValue = any,
-  TEvents extends FormEvent = any,
-> extends AbstractControl<TValue, TEvents | AbstractGroupEvent> {
+> extends AbstractControl<TValue> {
 
-  public get isValidating() {
+  protected override readonly emitter = new EventEmitter<AbstractGroupEvent>();
+
+  public override get isValidating() {
     return this.children.some((control) => control.isValidating);
   }
 
-  public get isFocused(): boolean {
+  public override get isFocused(): boolean {
     return this.children.some((control) => control.isFocused);
   }
 
-  public get isTouched(): boolean {
+  public override get isTouched(): boolean {
     return this.children.some((control) => control.isTouched);
   }
 
-  public get isDisabled(): boolean {
+  public override get isDisabled(): boolean {
     return this.children.every((control) => control.isDisabled);
   }
 
-  public get isDirty(): boolean {
+  public override get isDirty(): boolean {
     return this.children.some((control) => control.isDirty);
   }
 
-  public get isValid() {
+  public override get isValid() {
     const isValid = this.errors.count() === 0;
     const isAllChildrenValid = this.children.every((control) => control.isValid);
 
     return isValid && isAllChildrenValid;
   }
 
+  private readonly childUpdatesSubscriptionsMap = new Map<AbstractControl, UnsubscribeFn>();
+
   constructor(options: AbstractControlGroupOptions = {}) {
     super(options);
-  }
-
-  protected setChildren() {
-    for (const control of this.children) {
-      this.addChild(control);
-    }
   }
 
   protected addChild(control: AbstractControl) {
     control.setParent(this);
 
-    control.inheritConfiguration(this);
-
-    control.events.subscribe((event) => {
-      this.emitter.emit({ type: 'child-event', payload: { event, control: control } });
+    const unsubscribe = control.events.subscribe((event) => {
+      this.emitter.emit({ type: 'child-updated', payload: { event, control: control } });
     });
+
+    this.childUpdatesSubscriptionsMap.set(control, unsubscribe);
+  }
+
+  protected removeChild(control: AbstractControl) {
+    if (control.parent !== this) {
+      return;
+    }
+
+    control.setParent(null);
+
+    const unsubscribe = this.childUpdatesSubscriptionsMap.get(control);
+
+    unsubscribe?.();
+
+    this.childUpdatesSubscriptionsMap.delete(control);
   }
 
   public disable() {
@@ -71,6 +86,15 @@ export abstract class AbstractControlGroup<
 
   public setTouched(value: boolean): void {
     this.children.forEach((control) => control.setTouched(value));
+  }
+
+  public dispose() {
+    for (const control of this.children) {
+      this.removeChild(control);
+    }
+
+    this.childUpdatesSubscriptionsMap.forEach((unsubscribe) => unsubscribe());
+    this.childUpdatesSubscriptionsMap.clear();
   }
 
 }

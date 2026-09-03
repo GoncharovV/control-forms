@@ -1,7 +1,7 @@
 import { FormEvent } from './types';
 
 
-type UnsubscribeFn = () => void;
+export type UnsubscribeFn = () => void;
 
 type EventCallback<TEvent extends FormEvent> = (event: TEvent) => unknown;
 
