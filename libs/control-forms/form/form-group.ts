@@ -2,6 +2,7 @@ import { AbstractControl, AbstractControlGroup, AbstractControlGroupOptions } fr
 import { Prettify } from '../events';
 import { shallowEqualObjects } from '../utils';
 import { ValidationIssue, ValidationResult } from '../validation';
+import { resolveNestedControlByPath } from './utils';
 
 
 const __DEV__ = process.env.NODE_ENV === 'development';
@@ -64,7 +65,6 @@ export class FormGroup<TFields extends BaseFormFields = any>
         path: [key, ...(issue.path ?? [])],
       })));
     }
-
 
     return issues;
   }
@@ -147,7 +147,7 @@ export class FormGroup<TFields extends BaseFormFields = any>
   public async validate(): Promise<ValidationResult<FormGroupValues<TFields>>> {
     this.setValidating(true);
 
-    const selfValidation = this.validators.validate(this.value);
+    const selfValidationPromise = this.validators.validate(this.value);
 
     const fieldsValidationResultStore = {} as {
       [TKey in keyof TFields]: ValidationResult;
@@ -166,10 +166,10 @@ export class FormGroup<TFields extends BaseFormFields = any>
       fieldsValidationResultStore[key] = result;
     });
 
-    const [ownResult] = await Promise.all([selfValidation, ...childPromises]);
+    const [selfResult] = await Promise.all([selfValidationPromise, ...childPromises]);
 
 
-    const success = ownResult.success && isChildrenValid;
+    const success = selfResult.success && isChildrenValid;
 
 
     if (success) {
@@ -183,29 +183,19 @@ export class FormGroup<TFields extends BaseFormFields = any>
       };
     }
 
-    const issues: ValidationIssue[] = [];
+    for (const issue of selfResult.issues ?? []) {
+      const control = resolveNestedControlByPath(this, issue.path);
 
-    issues.push(...(ownResult.issues ?? []));
-
-    for (const [key, result] of Object.entries(fieldsValidationResultStore)) {
-      if (result.success === false) {
-        const mapped = result.issues.map((issue) => {
-          return {
-            ...issue,
-            path: [key, ...(issue.path ?? [])],
-          };
-        });
-
-        issues.push(...mapped);
+      if (control) {
+        control.errors.add(issue);
       }
     }
 
-    this.errors.replace(issues);
     this.setValidating(false);
 
     return {
       success: false,
-      issues,
+      issues: this.issues,
     };
   }
 

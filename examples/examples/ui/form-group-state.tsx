@@ -9,7 +9,10 @@ interface FormStateProps {
 }
 
 export const FormGroupState: FC<FormStateProps> = memo(({ form }) => {
-  const { isDirty, isFocused, isValid, isTouched, errors, isValidating, value, isSubmitting, api, isLoading } = useFormGroup(form);
+  const {
+    isDirty, isFocused, isValid, isTouched, issues, isValidating, value, isSubmitting, reset, isLoading,
+    validate,
+  } = useFormGroup(form);
 
   return (
     <div
@@ -53,10 +56,21 @@ export const FormGroupState: FC<FormStateProps> = memo(({ form }) => {
       </div>
 
 
-      <p>Form errors: {JSON.stringify(errors)}; {isLoading && <span>loading..</span>}</p>
+      <p>Form errors ({issues.length}): {JSON.stringify(issues)}; {isLoading && <span>loading..</span>}</p>
 
       <div style={{ display: 'flex', gap: 20 }}>
-        <button style={{ padding: 10, fontSize: 20 }} type="button" onClick={api.reset}>reset</button>
+        <button
+          style={{ padding: 10, fontSize: 20 }}
+          type="button"
+          onClick={() => {
+            console.log(form.issues);
+          }}
+        >log issues
+        </button>
+
+        <button style={{ padding: 10, fontSize: 20 }} type="button" onClick={validate}>validate</button>
+
+        <button style={{ padding: 10, fontSize: 20 }} type="button" onClick={reset}>reset</button>
 
         <button style={{ padding: 10, fontSize: 20 }} type="submit" disabled={isLoading}>→ SUBMIT FORM ←</button>
       </div>

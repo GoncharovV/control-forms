@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 
 import { FormArray, FormControl, FormGroup } from '../../libs/control-forms';
-import { FormArrayField, FormControlField, useFormGroup } from '../../libs/control-forms-react';
+import { FormArrayField, useFormGroup } from '../../libs/control-forms-react';
 import { FormGroupState } from './ui/form-group-state';
 import { Input } from './ui/input';
 
@@ -22,7 +22,7 @@ function createArrayForm() {
 
 
 export const FormArrayExample: FC = () => {
-  const { api, fields, instance } = useFormGroup(createArrayForm);
+  const { fields, instance, onSubmit } = useFormGroup(createArrayForm);
 
   const onAddControl = useCallback(() => {
     const index = fields.array.size.toString();
@@ -33,12 +33,11 @@ export const FormArrayExample: FC = () => {
   }, [fields.array]);
 
   return (
-    <form onSubmit={api.onSubmit} className="example-form">
-      {/* <h1>ARRAY FORM</h1> */}
+    <form onSubmit={onSubmit} className="example-form">
+      <h1>ARRAY FORM</h1>
 
-      <FormControlField control={fields.name}>
-        {(fieldData) => <Input data={fieldData} />}
-      </FormControlField>
+      <Input control={fields.name} placeholder="Name" description="Name" />
+
 
       <button type="button" onClick={onAddControl}>ADD CONTROL</button>
 
@@ -46,9 +45,7 @@ export const FormArrayExample: FC = () => {
 
       <FormArrayField control={fields.array}>
         {({ controls }) => controls.map((control, inx) => (
-          <FormControlField key={inx} control={control}>
-            {(fieldData) => <Input data={fieldData} />}
-          </FormControlField>
+          <Input control={control} key={inx} placeholder={`Control ${inx + 1}`} />
         ))}
       </FormArrayField>
 

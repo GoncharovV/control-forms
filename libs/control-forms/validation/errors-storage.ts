@@ -40,7 +40,7 @@ export class ErrorsStorage {
   }
 
   public getAll() {
-    return this._errors;
+    return [...this._errors];
   }
 
   public getFirst(): ValidationIssue | null {

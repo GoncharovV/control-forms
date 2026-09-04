@@ -8,6 +8,7 @@ import {
 import { EventEmitter } from '../events';
 import { ValidationIssue, ValidationResult } from '../validation';
 import { FormArrayEvents } from './types';
+import { resolveNestedControlByPath } from './utils';
 
 
 export type FormArrayOptions = AbstractControlGroupOptions;
@@ -129,29 +130,19 @@ export class FormArray<TControl extends AbstractControl = AbstractControl>
       };
     }
 
-    const issues: ValidationIssue[] = [];
+    for (const issue of ownResult.issues ?? []) {
+      const control = resolveNestedControlByPath(this, issue.path);
 
-    issues.push(...(ownResult.issues ?? []));
-
-    for (const [index, result] of controlsValidationStore.entries()) {
-      if (result.success === false) {
-        const mapped = result.issues.map((issue) => {
-          return {
-            ...issue,
-            path: [index, ...(issue.path ?? [])],
-          };
-        });
-
-        issues.push(...mapped);
+      if (control) {
+        control.errors.add(issue);
       }
     }
 
-    this.errors.replace(issues);
     this.setValidating(false);
 
     return {
       success: false,
-      issues,
+      issues: this.issues,
     };
   }
 

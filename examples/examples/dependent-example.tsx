@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { FormControl, FormGroup } from '../../libs/control-forms';
-import { FormControlField, useFormGroup } from '../../libs/control-forms-react';
+import { useFormGroup } from '../../libs/control-forms-react';
 import { FormGroupState } from './ui/form-group-state';
 import { Input } from './ui/input';
 
@@ -14,7 +14,7 @@ import './styles.css';
 // });
 
 export const DependentFormExample: FC = () => {
-  const { api, fields, instance } = useFormGroup(() => {
+  const { onSubmit, fields, instance } = useFormGroup(() => {
     return new FormGroup(
       {
         count: new FormControl('', {
@@ -29,17 +29,13 @@ export const DependentFormExample: FC = () => {
   });
 
   return (
-    <form onSubmit={api.onSubmit} className="example-form">
+    <form onSubmit={onSubmit} className="example-form">
       {/* <h1>DEPENDENT FORM FIELDS</h1> */}
 
       {/* TODO: make input[type=number] */}
-      <FormControlField control={fields.count}>
-        {(data) => <Input data={data} description="Count" />}
-      </FormControlField>
+      <Input control={fields.count} placeholder="Count" description="Count" />
 
-      <FormControlField control={fields.countX2}>
-        {(data) => <Input data={data} description="Count * 2" />}
-      </FormControlField>
+      <Input control={fields.countX2} placeholder="Count * 2" description="Count * 2" />
 
       <FormGroupState form={instance} />
     </form>

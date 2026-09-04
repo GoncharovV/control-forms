@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 
 import { FormControl, FormGroup } from '../../libs/control-forms';
-import { FormControlField, useFormGroup } from '../../libs/control-forms-react';
+import { useFormGroup } from '../../libs/control-forms-react';
 import { FormGroupState } from './ui/form-group-state';
 import { Input } from './ui/input';
 
@@ -16,6 +16,7 @@ function createBaseForm() {
       name: new FormControl('123', {
         validators: [z.string().max(3)],
         mode: 'onSubmit',
+
       }),
       lastName: new FormControl(''),
     },
@@ -24,7 +25,7 @@ function createBaseForm() {
 
 
 export const FormExample: FC = () => {
-  const { api, fields, instance } = useFormGroup(
+  const { onSubmit, fields, instance } = useFormGroup(
     createBaseForm,
     {
       onValidSubmit: (data) => console.log('VALID SUBMIT. DATA:', JSON.stringify(data)),
@@ -39,19 +40,13 @@ export const FormExample: FC = () => {
     },
   );
 
-
   return (
-    <form onSubmit={api.onSubmit} className="example-form">
+    <form onSubmit={onSubmit} className="example-form">
       {/* <h1 style={{ marginBottom: 15 }}>BASE FORM</h1> */}
 
-      <FormControlField control={fields.name}>
-        {(data) => <Input data={data} description="max len: 3" />}
-      </FormControlField>
+      <Input control={fields.name} placeholder="Name" description="max len: 3" />
 
-
-      <FormControlField control={fields.lastName}>
-        {(data) => <Input data={data} />}
-      </FormControlField>
+      <Input control={fields.lastName} placeholder="Last Name" description="Last Name" />
 
       <FormGroupState form={instance} />
     </form>
