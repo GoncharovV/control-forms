@@ -36,7 +36,7 @@ export class FormArray<TControl extends AbstractControl = AbstractControl>
   }
 
   public override get issues(): ValidationIssue[] {
-    const issues: ValidationIssue[] = [];
+    const issues: ValidationIssue[] = this.errors.getAll();
 
     for (const [index, control] of this.controls.entries()) {
       issues.push(...control.issues.map((issue) => ({
@@ -113,12 +113,14 @@ export class FormArray<TControl extends AbstractControl = AbstractControl>
 
     const [ownResult] = await Promise.all([selfValidationPromise, ...controlValidationPromises]);
 
-    this.setValidating(false);
 
     const success = ownResult.success && isAllControlValid;
 
     if (success) {
       this.errors.clear();
+
+      this.errors.replace([]);
+      this.setValidating(false);
 
       return {
         success: true,
@@ -143,6 +145,9 @@ export class FormArray<TControl extends AbstractControl = AbstractControl>
         issues.push(...mapped);
       }
     }
+
+    this.errors.replace(issues);
+    this.setValidating(false);
 
     return {
       success: false,

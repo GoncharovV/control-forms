@@ -56,7 +56,7 @@ export class FormGroup<TFields extends BaseFormFields = any>
   }
 
   public override get issues(): ValidationIssue[] {
-    const issues: ValidationIssue[] = [];
+    const issues = this.errors.getAll();
 
     for (const [key, control] of Object.entries(this.fieldsConfig)) {
       issues.push(...control.issues.map((issue) => ({
@@ -171,11 +171,10 @@ export class FormGroup<TFields extends BaseFormFields = any>
 
     const success = ownResult.success && isChildrenValid;
 
-    this.setValidating(false);
 
     if (success) {
       this.errors.clear();
-
+      this.setValidating(false);
 
       return {
         success: true,
@@ -200,6 +199,9 @@ export class FormGroup<TFields extends BaseFormFields = any>
         issues.push(...mapped);
       }
     }
+
+    this.errors.replace(issues);
+    this.setValidating(false);
 
     return {
       success: false,
