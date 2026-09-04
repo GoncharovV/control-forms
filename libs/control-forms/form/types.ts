@@ -43,10 +43,3 @@ export type BaseFormFields = Record<string, AbstractControl>;
 
 
 export type EmptyCallback = () => void;
-
-
-/**
- * The native SubmitEvent is incompatible with React event system
- * but we only need information about a few methods, so pick only them
- */
-export type HTMLFormSubmitEvent = Pick<SubmitEvent, 'stopPropagation' | 'preventDefault'>;

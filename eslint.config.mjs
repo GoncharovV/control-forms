@@ -13,6 +13,7 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@stylistic/max-len': ['error', 140],
+      '@typescript-eslint/no-unsafe-function-type': 'off',
     },
   },
 ];

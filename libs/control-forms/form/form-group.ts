@@ -2,7 +2,6 @@ import { AbstractControl, AbstractControlGroup, AbstractControlGroupOptions } fr
 import { Prettify } from '../events';
 import { shallowEqualObjects } from '../utils';
 import { ValidationIssue, ValidationResult } from '../validation';
-import { HTMLFormSubmitEvent } from './types';
 
 
 const __DEV__ = process.env.NODE_ENV === 'development';
@@ -87,10 +86,6 @@ export class FormGroup<TFields extends BaseFormFields = any>
         this.options.onUpdate?.(this.value);
       }
     });
-
-    this.submit = this.submit.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-    this.validate = this.validate.bind(this);
   }
 
   public setOptions(options: FormGroupOptions<FormGroupValues<TFields>>) {
@@ -212,13 +207,6 @@ export class FormGroup<TFields extends BaseFormFields = any>
     };
   }
 
-  public async onSubmit(event: HTMLFormSubmitEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    await this.submit();
-  }
-
   public reset() {
     this.isSubmitted = false;
 
@@ -226,16 +214,6 @@ export class FormGroup<TFields extends BaseFormFields = any>
 
     this.options.onUpdate?.(this.value);
     this.emitter.emit({ type: 'reset' });
-  }
-
-  public getSnapshot() {
-    return {
-      ...super.getSnapshot(),
-      isLoading: this.isLoading,
-      isSubmitted: this.isSubmitted,
-      fields: this.fields,
-      isSubmitting: this.isSubmitting,
-    };
   }
 
 }

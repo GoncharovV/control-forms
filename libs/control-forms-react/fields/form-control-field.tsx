@@ -4,6 +4,7 @@ import React, { ReactNode } from 'react';
 
 import { FormControl } from '../../control-forms';
 import { FormControlTrackResult, useFormControl } from '../use-form-control';
+import { onlyIfControlUpdated } from './utils';
 
 
 // TODO: add notifyOnChangeProps
@@ -17,6 +18,10 @@ export interface FormControlFieldProps<TControl extends FormControl> {
 function _FormControlField<TControl extends FormControl>(props: FormControlFieldProps<TControl>): ReactNode {
   const { control, children, render } = props;
 
+
+  console.log('rerendered', control.id);
+
+
   const data = useFormControl(control);
 
   const renderer = children ?? render;
@@ -26,4 +31,4 @@ function _FormControlField<TControl extends FormControl>(props: FormControlField
 
 (_FormControlField as React.FC).displayName = 'FormControlField';
 
-export const FormControlField = React.memo(_FormControlField) as typeof _FormControlField;
+export const FormControlField = React.memo(_FormControlField, onlyIfControlUpdated) as typeof _FormControlField;

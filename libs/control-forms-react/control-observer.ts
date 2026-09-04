@@ -1,12 +1,12 @@
 import { AbstractControl } from '../control-forms';
 import { isPropEqual, shallowEqualObjects } from '../control-forms/utils';
+import { ControlApiSnapshot, ControlSnapshot, getControlSnapshot } from './snapshot';
 
 
-type ControlSnapshot<TControl extends AbstractControl> = ReturnType<TControl['getSnapshot']>;
-
-
-export type TrackResult<TControl extends AbstractControl> = ControlSnapshot<TControl>
-& { api: Omit<TControl, keyof ControlSnapshot<TControl>>; instance: TControl; };
+export type TrackResult<TControl extends AbstractControl> =
+  ControlSnapshot<TControl>
+  & ControlApiSnapshot<TControl>
+  & { instance: TControl; };
 
 export type NotifyOnChangeProps<TControl extends AbstractControl> =
 undefined | 'all' | Array<keyof ControlSnapshot<TControl>> | (() => Array<keyof ControlSnapshot<TControl>> | 'all' | undefined);
@@ -21,17 +21,12 @@ export class ControlObserver<TControl extends AbstractControl> {
 
   private trackedProps = new Set<keyof ControlSnapshot<TControl>>();
 
-
   constructor(
     private readonly control: TControl,
     private options: ControlObserverOptions<TControl> = {},
   ) {
-    this.snapshot = this.control.getSnapshot() as ControlSnapshot<TControl>;
+    this.snapshot = getControlSnapshot(this.control);
 
-    this.bindMethods();
-  }
-
-  private bindMethods() {
     this.getCurrentSnapshot = this.getCurrentSnapshot.bind(this);
     this.subscribe = this.subscribe.bind(this);
   }
@@ -60,9 +55,8 @@ export class ControlObserver<TControl extends AbstractControl> {
     }
   }
 
-
   private notify() {
-    const newSnapshot = this.control.getSnapshot() as ControlSnapshot<TControl>;
+    const newSnapshot = getControlSnapshot(this.control);
 
     if (shallowEqualObjects(this.snapshot, newSnapshot)) {
       return;
@@ -104,10 +98,10 @@ export class ControlObserver<TControl extends AbstractControl> {
   }
 
 
-  trackResult(): TrackResult<TControl> {
-    const trackedResult = {} as TrackResult<TControl>;
+  trackResult(initial: Partial<TrackResult<TControl>> = {}): TrackResult<TControl> {
+    const trackedResult = initial as TrackResult<TControl>;
 
-    const result = this.control.getSnapshot() as ControlSnapshot<TControl>;
+    const result = getControlSnapshot(this.control);
 
     Object.keys(result).forEach((key) => {
       Object.defineProperty(trackedResult, key, {
@@ -119,12 +113,6 @@ export class ControlObserver<TControl extends AbstractControl> {
           return result[key as keyof ControlSnapshot<TControl>];
         },
       });
-    });
-
-    Object.defineProperty(trackedResult, 'api', {
-      configurable: false,
-      enumerable: true,
-      get: () => this.control,
     });
 
     Object.defineProperty(trackedResult, 'instance', {

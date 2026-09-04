@@ -36,8 +36,6 @@ export class FormControl<TValue = any> extends AbstractControl<TValue> {
     return this.element;
   }
 
-  private clearErrorsOnChange = true;
-
   protected get children() {
     return [];
   }
@@ -56,12 +54,6 @@ export class FormControl<TValue = any> extends AbstractControl<TValue> {
 
   public setOptions(options: FormControlOptions<TValue>) {
     super.setOptions(options);
-
-    const { clearErrorsOnChange } = options;
-
-    if (clearErrorsOnChange !== undefined) {
-      this.clearErrorsOnChange = clearErrorsOnChange;
-    }
 
     this.options = options;
   }
@@ -82,7 +74,7 @@ export class FormControl<TValue = any> extends AbstractControl<TValue> {
       this.options.onUpdate?.(value);
     }
 
-    if (this.clearErrorsOnChange) {
+    if (this.options.clearErrorsOnChange === true) {
       this.errors.clear();
     }
   }

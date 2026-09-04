@@ -150,14 +150,6 @@ export class FormArray<TControl extends AbstractControl = AbstractControl>
     };
   }
 
-  public getSnapshot() {
-    return {
-      ...super.getSnapshot(),
-      // TODO: move from snapshot cause its not serializable
-      controls: [...this.controls],
-    };
-  }
-
 }
 
 export function isFormArray(x: unknown): x is FormArray {

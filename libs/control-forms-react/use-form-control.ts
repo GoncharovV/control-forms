@@ -1,28 +1,22 @@
 'use client';
 
-import React, { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import React, { useState } from 'react';
 
-import { ControlValue, FormControl, FormControlOptions } from '../control-forms';
-import { ControlObserver, ControlObserverOptions, TrackResult } from './control-observer';
+import { FormControl, FormControlOptions } from '../control-forms';
+import { ControlObserverOptions, TrackResult } from './control-observer';
 import { ControlOrFactory } from './types';
+import { useControlObserver } from './use-control-observer';
 
 
 type ValueChangeEvent = React.ChangeEvent<HTMLElement & { value: string; }>;
 
-
-type Register<TValue = any> = () => {
-  onChange: (value: ValueChangeEvent) => void;
-  onFocus: FormControl<TValue>['onFocus'];
-  onBlur: FormControl<TValue>['onBlur'];
-
-  value: FormControl<TValue>['value'];
-  disabled: FormControl<TValue>['isDisabled'];
-
+export type FormControlTrackResult<TControl extends FormControl> = TrackResult<TControl> & {
   ref: (el: HTMLElement | null) => void;
+  disabled: boolean;
+
+  onChange: (value: ValueChangeEvent) => void;
+  onValueChange: (value: TControl extends FormControl<infer TValue> ? TValue : never) => void;
 };
-
-
-export type FormControlTrackResult<TControl extends FormControl> = TrackResult<TControl> & { register: Register<ControlValue<TControl>>; };
 
 export type UseFormControlOptions<TControl extends FormControl> =
   (TControl extends FormControl<infer TValue> ? FormControlOptions<TValue> : never)
@@ -34,45 +28,30 @@ export function useFormControl<TControl extends FormControl>(
 ): FormControlTrackResult<TControl> {
   const [control] = useState(controlOrFactory);
 
-  useEffect(() => {
-    if (options) {
-      control.setOptions(options);
-    }
-  }, [control, options]);
-
-
-  const [observer] = useState(() => new ControlObserver(control, options));
-
-  useSyncExternalStore(
-    observer.subscribe,
-    observer.getCurrentSnapshot,
-    observer.getCurrentSnapshot,
-  );
-
-  const trackedResult = observer.trackResult() as FormControlTrackResult<TControl>;
-
-  const register: Register<ControlValue<TControl>> = useCallback(() => {
-    observer.trackProp('value');
-    observer.trackProp('isDisabled');
-
+  const [additionalProps] = useState(() => {
     return {
+      onValueChange: (value: TControl extends FormControl<infer TValue> ? TValue : never) => control.onChange(value),
+      ref: (el: HTMLElement | null) => control.setElement(el),
+      // @ts-expect-error redefine onChange to be suitable for event
       onChange: (event: ValueChangeEvent) => control.onChange(event.target.value),
-      onFocus: control.onFocus,
-      onBlur: control.onBlur,
-
-      value: control.value,
-      disabled: control.isDisabled,
-
-      ref: control.setElement,
-    };
-  }, [control, observer]);
-
-
-  Object.defineProperty(trackedResult, 'register', {
-    configurable: false,
-    enumerable: true,
-    get: () => register,
+    } as const satisfies Record<keyof Omit<FormControlTrackResult<FormControl>, keyof TrackResult<FormControl>>, any>;
   });
 
-  return trackedResult;
+  const trackedResult = useControlObserver(control, options);
+
+  Object.defineProperty(trackedResult, 'disabled', {
+    configurable: false,
+    enumerable: true,
+    get: () => control.isDisabled,
+  });
+
+  for (const key in additionalProps) {
+    Object.defineProperty(trackedResult, key, {
+      configurable: false,
+      enumerable: true,
+      value: additionalProps[key as keyof typeof additionalProps],
+    });
+  }
+
+  return trackedResult as FormControlTrackResult<TControl>;
 }

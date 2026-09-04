@@ -333,30 +333,6 @@ export abstract class AbstractControl<TValue = any> {
     return true;
   }
 
-
-  /**
-   * @deprecated
-   * 
-   * TODO: delete
-   */
-  public getSnapshot() {
-    return {
-      value: this.value,
-
-      isTouched: this.isTouched,
-      isDirty: this.isDirty,
-      isFocused: this.isFocused,
-
-      isDisabled: this.isDisabled,
-      isEnabled: this.isEnabled,
-
-      isValid: this.isValid,
-      isInvalid: this.isInvalid,
-      errors: [...this.errors.getAll()],
-      isValidating: this.isValidating,
-    };
-  }
-
   // Parent
 
   public setParent(parent: AbstractControl | null) {

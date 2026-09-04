@@ -1,7 +1,8 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useLayoutEffect, useState, useSyncExternalStore } from 'react';
 
 import { AbstractControl } from '../control-forms';
-import { ControlObserver, ControlObserverOptions } from './control-observer';
+import { ControlObserver, ControlObserverOptions, TrackResult } from './control-observer';
+import { getControlApi } from './snapshot';
 
 
 export function useControlObserver<TControl extends AbstractControl>(control: TControl, options?: ControlObserverOptions<TControl>) {
@@ -13,9 +14,10 @@ export function useControlObserver<TControl extends AbstractControl>(control: TC
     observer.getCurrentSnapshot,
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     observer.setOptions(options);
   }, [observer, options]);
 
-  return observer.trackResult();
+
+  return observer.trackResult(getControlApi(control) as TrackResult<TControl>);
 }
