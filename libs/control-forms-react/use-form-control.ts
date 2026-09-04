@@ -42,7 +42,7 @@ export function useFormControl<TControl extends FormControl>(
   Object.defineProperty(trackedResult, 'disabled', {
     configurable: false,
     enumerable: true,
-    get: () => control.isDisabled,
+    get: () => (trackedResult as unknown as FormControlTrackResult<FormControl>).isDisabled,
   });
 
   for (const key in additionalProps) {
