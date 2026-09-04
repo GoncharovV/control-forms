@@ -11,9 +11,8 @@ export type ValidationMode = 'onChange' | 'onBlur' | 'onSubmit' | 'none';
 export type ControlResetEvent = FormEvent<'reset'>;
 export type ControlDisabledEvent = FormEvent<'disabled'>;
 export type ControlEnabledEvent = FormEvent<'enabled'>;
-export type ControlDisabledChangedEvent = FormEvent<'disabled'>;
-export type ControlDirtyChangedEvent = FormEvent<'dirty', boolean>;
-export type ControlTouchedChangedEvent = FormEvent<'touched', boolean>;
+export type ControlDirtyEvent = FormEvent<'dirty', boolean>;
+export type ControlTouchedEvent = FormEvent<'touched', boolean>;
 
 // Validation events
 
@@ -30,12 +29,12 @@ export type ValidationEvent =
 
 
 export type AbstractControlEvent =
-    | ControlTouchedChangedEvent
+    | ControlTouchedEvent
     | ControlResetEvent
-    | ControlDirtyChangedEvent
+    | ControlDirtyEvent
     | ControlDisabledEvent
     | ControlEnabledEvent
-    | ControlDisabledChangedEvent
+    | ControlDisabledEvent
     | ValidationEvent
     | ({ type: (string & {}); });
 
