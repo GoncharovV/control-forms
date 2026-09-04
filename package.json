@@ -1,6 +1,6 @@
 {
   "name": "control-forms",
-  "private": true,
+  "private": false,
   "version": "0.1.0",
   "type": "module",
   "files": [
@@ -46,15 +46,12 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "rxjs": "7.8.2",
-    "tsup": "8.4.0",
+    "tsup": "8.5.1",
     "typescript": "5.8.3",
     "vite": "6.2.6",
     "vitepress": "1.6.3",
     "vitest": "3.1.1",
     "zod": "4.4.1"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.9.5"
   },
   "overrides": {
     "vite": "6.2.6"
