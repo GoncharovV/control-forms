@@ -1,12 +1,6 @@
 import { AbstractControl, AbstractControlEvent } from '../abstract';
 import { FormEvent } from '../events';
-import { ValidationResult } from '../validation';
 
-
-/**
- * TS is not ready for this
- */
-// export type FormControlUpdateEvent<TValue = any> = FormEvent<'update', TValue>;
 
 export type FormChildUpdateEvent = FormEvent<'child-event', {
   event: AbstractControlEvent;
@@ -15,13 +9,15 @@ export type FormChildUpdateEvent = FormEvent<'child-event', {
 
 // FormControl events
 
+export type FormControlUpdatedEvent<TValue = any> = FormEvent<'updated', TValue>;
 export type FormControlFocusEvent = FormEvent<'focused'>;
 export type FormControlBlurEvent = FormEvent<'blur'>;
-export type FormControlEvent =
-	// | FormControlUpdateEvent<TValue>
+
+export type FormControlEvent<TValue = any> =
+	| AbstractControlEvent
+	| FormControlUpdatedEvent<TValue>
 	| FormControlFocusEvent
-	| FormControlBlurEvent
-	| AbstractControlEvent;
+	| FormControlBlurEvent;
 
 // FormGroup events
 
@@ -35,33 +31,15 @@ export type FormGroupEvent =
 	| AbstractControlEvent;
 
 
-export type ControlAddEvent = FormEvent<'control-added', AbstractControl>;
-export type ControlRemoveEvent = FormEvent<'control-removed', AbstractControl>;
-export type UpdateControlsListEvent = FormEvent<'controls-list-updated', AbstractControl[]>;
+export type UpdateControlsListEvent = FormEvent<'controls-changed', AbstractControl[]>;
 
 
-export type FormArrayEvents = AbstractControlEvent | ControlAddEvent | ControlRemoveEvent | UpdateControlsListEvent;
+export type FormArrayEvents = AbstractControlEvent | UpdateControlsListEvent;
 
 
 // Validation types
 
 export type BaseFormFields = Record<string, AbstractControl>;
-
-export type FormGroupFieldsValidation<TFields extends BaseFormFields> =
-{
-  [FieldName in keyof TFields]: Awaited<ReturnType<TFields[FieldName]['validate']>>
-};
-
-
-export interface FormGroupValidationResult<TFields extends BaseFormFields> extends ValidationResult {
-  fieldErrors: FormGroupFieldsValidation<TFields>;
-}
-
-export type FormArrayControlsValidation<TControl extends AbstractControl> = Array<Awaited<ReturnType<TControl['validate']>>>;
-
-export interface FormArrayValidationResult<TControl extends AbstractControl> extends ValidationResult {
-  controlsErrors: FormArrayControlsValidation<TControl>;
-}
 
 
 export type EmptyCallback = () => void;

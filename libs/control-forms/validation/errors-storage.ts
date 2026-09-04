@@ -51,5 +51,4 @@ export class ErrorsStorage {
     return this._errors.length;
   }
 
-
 }

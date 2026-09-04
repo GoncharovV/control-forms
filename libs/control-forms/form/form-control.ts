@@ -1,5 +1,5 @@
 import { AbstractControl, AbstractControlGroup, AbstractControlOptions } from '../abstract';
-import { hasValidators } from '../validation';
+import { EventEmitter, ReadonlyEventEmitter } from '../events';
 import { EmptyCallback, FormControlEvent } from './types';
 
 
@@ -11,13 +11,17 @@ export interface FormControlOptions<TValue = any> extends AbstractControlOptions
   clearErrorsOnChange?: boolean;
 }
 
-// Type of 'update' event requires generic and cannot be part of FormControlEvent union (due to TS issue, idk)
-
-export class FormControl<TValue = any> extends AbstractControl<TValue, FormControlEvent | { type: 'updated'; payload: TValue; }> {
+export class FormControl<TValue = any> extends AbstractControl<TValue> {
 
   private _value: TValue;
 
   private element: HTMLElement | null = null;
+
+  protected readonly emitter = new EventEmitter<FormControlEvent<TValue>>();
+
+  public get events(): ReadonlyEventEmitter<FormControlEvent<TValue>> {
+    return this.emitter;
+  }
 
   public get value() {
     return this._value;
@@ -46,14 +50,6 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
 
     this._value = initialValue;
 
-    this.bindMethods();
-  }
-
-  private bindMethods() {
-    this.onFocus = this.onFocus.bind(this);
-    this.onBlur = this.onBlur.bind(this);
-    this.onChange = this.onChange.bind(this);
-
     this.setElement = this.setElement.bind(this);
     this.focus = this.focus.bind(this);
   }
@@ -61,12 +57,7 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
   public setOptions(options: FormControlOptions<TValue>) {
     super.setOptions(options);
 
-    const { validators, mode, clearErrorsOnChange } = options;
-
-    if (hasValidators(validators) && mode === undefined) {
-      // Default validation mode for controls with provided validators
-      this.setValidationMode('onSubmit');
-    }
+    const { clearErrorsOnChange } = options;
 
     if (clearErrorsOnChange !== undefined) {
       this.clearErrorsOnChange = clearErrorsOnChange;
@@ -85,20 +76,21 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
     this._value = value;
 
     if (isValueChanged) {
+      // @ts-expect-error TODO:
       this.emitter.emit({ type: 'updated', payload: value });
 
       this.options.onUpdate?.(value);
     }
 
     if (this.clearErrorsOnChange) {
-      this.clearErrors();
+      this.errors.clear();
     }
   }
 
   public reset(): void {
     this.setDirty(false);
     this.setTouched(false);
-    this.clearErrors();
+    this.errors.clear();
 
     this.setValue(this.initialValue);
 
@@ -124,7 +116,7 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
     this.markAllAsDirty();
     this.markAllAsTouched();
 
-    if (this.getValidationMode() === 'onChange') {
+    if (this.validationMode === 'onChange') {
       this.validate();
     }
   }
@@ -136,7 +128,7 @@ export class FormControl<TValue = any> extends AbstractControl<TValue, FormContr
 
     this.options.onBlur?.();
 
-    if (this.getValidationMode() === 'onBlur') {
+    if (this.validationMode === 'onBlur') {
       this.validate();
     }
   }

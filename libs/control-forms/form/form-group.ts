@@ -1,13 +1,8 @@
 import { AbstractControl, AbstractControlGroup, AbstractControlGroupOptions } from '../abstract';
 import { Prettify } from '../events';
-import { copyObject, shallowEqualObjects } from '../utils';
-import { ValidationResult } from '../validation';
-import {
-  FormGroupEvent,
-  FormGroupFieldsValidation,
-  FormGroupValidationResult,
-  HTMLFormSubmitEvent,
-} from './types';
+import { shallowEqualObjects } from '../utils';
+import { ValidationIssue, ValidationResult } from '../validation';
+import { HTMLFormSubmitEvent } from './types';
 
 
 const __DEV__ = process.env.NODE_ENV === 'development';
@@ -27,10 +22,9 @@ export type FormGroupValues<TFields extends BaseFormFields> = Prettify<{
   [TKey in keyof TFields]: TFields[TKey] extends AbstractControl<infer TValue> ? TValue : never;
 }>;
 
-// Type of 'update' event requires generic and cannot be part of FormControlEvent union (due to TS issue, idk)
 
 export class FormGroup<TFields extends BaseFormFields = any>
-  extends AbstractControlGroup<FormGroupValues<TFields>, FormGroupEvent | { type: 'updated'; payload: FormGroupValues<TFields>; }> {
+  extends AbstractControlGroup<FormGroupValues<TFields>> {
 
   public isSubmitted = false;
 
@@ -62,10 +56,18 @@ export class FormGroup<TFields extends BaseFormFields = any>
     return result as FormGroupValues<TFields>;
   }
 
-  private _lastValidationResult: FormGroupValidationResult<TFields> | null = null;
+  public override get issues(): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
 
-  public get lastValidationResult() {
-    return this._lastValidationResult;
+    for (const [key, control] of Object.entries(this.fieldsConfig)) {
+      issues.push(...control.issues.map((issue) => ({
+        ...issue,
+        path: [key, ...(issue.path ?? [])],
+      })));
+    }
+
+
+    return issues;
   }
 
   constructor(
@@ -74,17 +76,21 @@ export class FormGroup<TFields extends BaseFormFields = any>
   ) {
     super(options);
 
-    this.setChildren();
-
-    this.bindMethods();
+    for (const control of Object.values(this.fieldsConfig)) {
+      this.addChild(control);
+    }
 
     this.setOptions(options);
 
-    this.emitter.on('child-event', ({ payload }) => {
+    this.emitter.on('child-updated', ({ payload }) => {
       if ((payload.event.type as 'updated') === 'updated') {
         this.options.onUpdate?.(this.value);
       }
     });
+
+    this.submit = this.submit.bind(this);
+    this.onSubmit = this.onSubmit.bind(this);
+    this.validate = this.validate.bind(this);
   }
 
   public setOptions(options: FormGroupOptions<FormGroupValues<TFields>>) {
@@ -97,24 +103,13 @@ export class FormGroup<TFields extends BaseFormFields = any>
     this.options = options;
   }
 
-  private bindMethods() {
-    this.submit = this.submit.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
-    this.validate = this.validate.bind(this);
-  }
 
   public setValue(values: FormGroupValues<TFields>): void {
-    const oldValue = copyObject(this.value);
-
     for (const [key, value] of Object.entries(values)) {
       this.fields[key].setValue(value);
     }
 
-    const isValueChanged = !shallowEqualObjects(oldValue, this.value);
-
-    if (isValueChanged) {
-      this.options.onUpdate?.(this.value);
-    }
+    this.options.onUpdate?.(this.value);
   }
 
   public async submit() {
@@ -141,7 +136,7 @@ export class FormGroup<TFields extends BaseFormFields = any>
         console.warn(
           'An unhandled exception was caught while submitting the form. %cFormGroup onSubmit callbacks should not throw%c.' +
           '\n\n' +
-          'Make sure to process potential exception yourself',
+          'Make sure to process potential exceptions yourself',
           'font-weight: bold',
           'font-weight: normal',
         );
@@ -154,13 +149,14 @@ export class FormGroup<TFields extends BaseFormFields = any>
     }
   }
 
-  public async validate(): Promise<FormGroupValidationResult<TFields>> {
+  public async validate(): Promise<ValidationResult<FormGroupValues<TFields>>> {
     this.setValidating(true);
-    this.emitter.emit({ type: 'validation-started' });
 
-    const selfValidation = this.validateValue(this.value);
+    const selfValidation = this.validators.validate(this.value);
 
-    const fieldsValidationResultStore = {} as FormGroupFieldsValidation<TFields>;
+    const fieldsValidationResultStore = {} as {
+      [TKey in keyof TFields]: ValidationResult;
+    };
 
     let isChildrenValid = true;
 
@@ -175,30 +171,45 @@ export class FormGroup<TFields extends BaseFormFields = any>
       fieldsValidationResultStore[key] = result;
     });
 
-
     const [ownResult] = await Promise.all([selfValidation, ...childPromises]);
 
-    if (ownResult.success) {
-      this.clearErrors();
-    } else {
-      this.setErrors(ownResult.errors);
-    }
-
-    this.setValidating(false);
 
     const success = ownResult.success && isChildrenValid;
 
-    const result: FormGroupValidationResult<TFields> = {
-      success,
-      errors: ownResult.errors,
-      fieldErrors: fieldsValidationResultStore,
+    this.setValidating(false);
+
+    if (success) {
+      this.errors.clear();
+
+
+      return {
+        success: true,
+        value: this.value, // TODO: may be save vales because of async
+        issues: undefined,
+      };
+    }
+
+    const issues: ValidationIssue[] = [];
+
+    issues.push(...(ownResult.issues ?? []));
+
+    for (const [key, result] of Object.entries(fieldsValidationResultStore)) {
+      if (result.success === false) {
+        const mapped = result.issues.map((issue) => {
+          return {
+            ...issue,
+            path: [key, ...(issue.path ?? [])],
+          };
+        });
+
+        issues.push(...mapped);
+      }
+    }
+
+    return {
+      success: false,
+      issues,
     };
-
-    this._lastValidationResult = result;
-
-    this.emitter.emit({ type: 'validation-finished', payload: result });
-
-    return result;
   }
 
   public async onSubmit(event: HTMLFormSubmitEvent) {
@@ -211,16 +222,9 @@ export class FormGroup<TFields extends BaseFormFields = any>
   public reset() {
     this.isSubmitted = false;
 
-    const oldValue = copyObject(this.value);
-
     this.controls.forEach((control) => control.reset());
 
-    const isValueChanged = !shallowEqualObjects(oldValue, this.value);
-
-    if (isValueChanged) {
-      this.options.onUpdate?.(this.value);
-    }
-
+    this.options.onUpdate?.(this.value);
     this.emitter.emit({ type: 'reset' });
   }
 
@@ -231,7 +235,6 @@ export class FormGroup<TFields extends BaseFormFields = any>
       isSubmitted: this.isSubmitted,
       fields: this.fields,
       isSubmitting: this.isSubmitting,
-      lastValidationResult: this.lastValidationResult,
     };
   }
 

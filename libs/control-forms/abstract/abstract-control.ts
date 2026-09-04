@@ -1,6 +1,12 @@
 import { EventEmitter, ReadonlyEventEmitter } from '../events';
 import { id } from '../utils';
-import { ErrorsStorage, ValidationResult, Validator, ValidatorsController } from '../validation';
+import {
+  ErrorsStorage,
+  ValidationIssue,
+  ValidationResult,
+  Validator,
+  ValidatorsController,
+} from '../validation';
 import { AbstractControlEvent, ControlId, ValidationMode } from './types';
 
 
@@ -86,7 +92,7 @@ export abstract class AbstractControl<TValue = any> {
 
   public readonly id: ControlId;
 
-  public abstract get value(): TValue;
+  public abstract get value(): TValue | undefined;
 
   private _isValidating = false;
 
@@ -248,6 +254,10 @@ export abstract class AbstractControl<TValue = any> {
 
   public readonly errors: ErrorsStorage;
 
+  public get issues(): ValidationIssue[] {
+    return this.errors.getAll();
+  }
+
   constructor(private _options: AbstractControlOptions = {}) {
     this.validators = new ValidatorsController();
 
@@ -312,7 +322,7 @@ export abstract class AbstractControl<TValue = any> {
   }
 
   private getShouldValidate() {
-    if (this.validationMode === 'none' || this.validationMode === null) {
+    if (this.validationMode === 'none') {
       return false;
     }
 

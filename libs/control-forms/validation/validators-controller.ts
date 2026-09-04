@@ -17,7 +17,7 @@ export class ValidatorsController<TValue = unknown> implements StandardSchemaV1.
 
   private _validators: Validator<TValue>[] = [];
 
-  public get validators(): ReadonlyArray<Validator<TValue>> {
+  public get getAll(): ReadonlyArray<Validator<TValue>> {
     return this._validators;
   }
 
@@ -53,7 +53,7 @@ export class ValidatorsController<TValue = unknown> implements StandardSchemaV1.
       return { success: true, value: value as TValue, issues: undefined };
     }
 
-    const results = this.validators.map((validator) => executeValidator(validator, value as TValue));
+    const results = this.getAll.map((validator) => executeValidator(validator, value as TValue));
 
     // All validators are sync -> return sync result
     if (results.every(isNotPromise)) {
