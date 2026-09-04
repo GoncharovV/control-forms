@@ -18,6 +18,7 @@ export function useControlObserver<TControl extends AbstractControl>(control: TC
     observer.setOptions(options);
   }, [observer, options]);
 
+  const [controlApi] = useState(() => getControlApi(control) as TrackResult<TControl>);
 
-  return observer.trackResult(getControlApi(control) as TrackResult<TControl>);
+  return observer.trackResult({ ...controlApi });
 }
